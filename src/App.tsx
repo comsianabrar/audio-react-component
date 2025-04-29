@@ -9,6 +9,7 @@ function App() {
   const [recordingTime, setRecordingTime] = useState(0);
 
   const [isRecording, setIsRecording] = useState(false);
+  const [isMicDisabled, setIsMicDisabled] = useState(true);
 
   const timeRef = useRef<number | null>(null);
 
@@ -20,6 +21,7 @@ function App() {
         console.log("getUserMedia supported.");
         navigator.mediaDevices.getUserMedia({ audio: true })
           .then(stream => {
+            setIsMicDisabled(false);
             setAudioStream(stream);
             const recorder = new MediaRecorder(stream);
             let audioData: Blob[];
@@ -29,7 +31,7 @@ function App() {
               if (event.data.size > 0) {
                 audioData = [event.data];
               }
-            }
+            };
 
             recorder.onstop = () => {
               if (audioData.length > 0) {
@@ -39,12 +41,15 @@ function App() {
               } else {
                 console.error("No audio data captured.");
               }
-            }
-
+            };
           })
           .catch(err => {
             console.error('Error accessing microphone:', err);
+            setIsMicDisabled(true);
           });
+      } else {
+        console.error("mic not enabled.");
+        setIsMicDisabled(true);
       }
     }
   }, [audioStream]);
@@ -60,6 +65,7 @@ function App() {
   // }, [isRecording])
 
   const toggleAudioRecorder = () => {
+    if (isMicDisabled) return false;
     !isRecording && startRecording();
   }
 
@@ -96,6 +102,13 @@ function App() {
     <>
       <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
         <h4 className="text-2xl py-10">Click the mic button to start recording!</h4>
+
+        {isMicDisabled && (
+          <div className="text-red-600 p-3 mb-4">
+            Please enable mic it to start recording.
+          </div>
+        )}
+
         <MdMic onClick={toggleAudioRecorder}
           className={`border-1 
         hover:border-0 
